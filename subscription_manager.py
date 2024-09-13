@@ -1,7 +1,7 @@
 class SubscriptionManager:
     def __init__(self):
-        # 初始化订阅列表，可以从文件或数据库加载
-        self.subscriptions = []
+        # 初始化订阅列表
+        self.subscriptions = ['langchain-ai/langchain']
 
     def get_subscriptions(self):
         # 返回当前的订阅列表
