@@ -4,6 +4,9 @@ from update_fetcher import UpdateFetcher
 from notifier import Notifier
 from report_generator import ReportGenerator
 from scheduler import Scheduler
+from llm_module import LLMModule
+from datetime import datetime
+
 
 class SentinelShell(cmd.Cmd):
     intro = (
@@ -43,9 +46,12 @@ class SentinelShell(cmd.Cmd):
 
     def do_fetch(self, arg):
         "Fetch updates for all subscribed repositories"
-        updates = self.update_fetcher.fetch_updates(self.subscription_manager.get_subscriptions())
-        report = self.report_generator.generate_report(updates)
-        self.notifier.send_notification(report)
+        for repo in self.subscription_manager.get_subscriptions():
+            issues, prs = self.update_fetcher.fetch_issues_and_prs(repo)
+            self.update_fetcher.export_to_markdown(repo, issues, prs)
+            markdown_filename = f"{repo.replace('/', '_')}_{datetime.now().strftime('%Y-%m-%d')}.md"
+            self.report_generator.generate_daily_report(markdown_filename)
+        print("Reports generated for all subscribed repositories.")
 
     def do_list(self, arg):
         "List all subscribed repositories"
@@ -63,7 +69,8 @@ def main():
     subscription_manager = SubscriptionManager()
     update_fetcher = UpdateFetcher()
     notifier = Notifier()
-    report_generator = ReportGenerator()
+    llm_module = LLMModule()
+    report_generator = ReportGenerator(llm_module)
 
     # 初始化并启动调度器
     scheduler = Scheduler(subscription_manager, update_fetcher, notifier, report_generator)
